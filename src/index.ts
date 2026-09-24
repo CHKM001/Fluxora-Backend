@@ -34,6 +34,7 @@ import {
   refreshHotConfig,
   loadConfig,
 } from './config/env.js';
+import { validateStartupConfig } from './config/startupValidation.js';
 import { setRuntimeRateLimitConfig } from './config/rateLimits.js';
 import { reloadFlags, prepareReloadFlags } from './config/featureFlags.js';
 import { logger } from './lib/logger.js';
@@ -87,6 +88,12 @@ if (process.env.NODE_ENV !== 'test') {
   captureStartupEnvSnapshot();
 
   (async () => {
+    // ── Startup configuration validation (issue #1437) ───────────────────
+    // Fail immediately — before dependency probes, socket binding, or any
+    // request handling — when any configuration module is invalid. Throwing
+    // here lands in the .catch() below which logs startup:fatal and exits(1).
+    validateStartupConfig();
+
     const cfg = loadConfig();
 
     // ── OpenTelemetry SDK & Logs Bridge ───────────────────────────────────

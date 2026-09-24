@@ -99,3 +99,42 @@ export function getPinnedAddressNetwork(
 
   return null;
 }
+
+/**
+ * Validate the pinned contract allowlist and network passphrases (issue #1437).
+ *
+ * These tables are static module data, but if an entry were ever edited into
+ * an invalid StrKey the mismatch would only surface when a request tried to
+ * verify or resolve an address. Validate them at startup instead. Overrides
+ * are injectable for tests.
+ */
+export function validateStellarContractsConfig(
+  allowlist: Record<
+    PinnedStellarNetwork,
+    Record<PinnedStellarAddressKind, readonly string[]>
+  > = STELLAR_CONTRACT_ALLOWLIST,
+  passphrases: Record<StellarNetwork, string> = STELLAR_NETWORK_PASSPHRASES,
+): string[] {
+  const issues: string[] = [];
+
+  for (const network of Object.keys(allowlist) as PinnedStellarNetwork[]) {
+    for (const kind of ['contract', 'token'] as PinnedStellarAddressKind[]) {
+      const entries = allowlist[network][kind];
+      entries.forEach((address, index) => {
+        if (!isValidStellarContractAddress(address)) {
+          issues.push(
+            `STELLAR_CONTRACT_ALLOWLIST.${network}.${kind}[${index}] must be a valid Stellar contract StrKey (got "${address}")`,
+          );
+        }
+      });
+    }
+  }
+
+  for (const network of Object.keys(passphrases) as StellarNetwork[]) {
+    if (typeof passphrases[network] !== 'string' || passphrases[network].trim() === '') {
+      issues.push(`STELLAR_NETWORK_PASSPHRASES.${network} must be a non-empty string`);
+    }
+  }
+
+  return issues;
+}

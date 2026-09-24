@@ -55,6 +55,7 @@ import { initializeAdminStateLock } from './state/adminState.js';
 import { createRateLimiter } from './middleware/rateLimiter.js';
 import { createDeprecationMiddleware } from './middleware/deprecation.js';
 import { routeDeprecations } from './config/deprecations.js';
+import { validateStartupConfig } from './config/startupValidation.js';
 import { createRateLimitsRouter } from './routes/rateLimits.js';
 import { getRateLimitConfig } from './config/rateLimits.js';
 import { successResponse } from './utils/response.js';
@@ -389,6 +390,13 @@ async function wireIndexerLeaderElection(config: Config): Promise<void> {
 export function createApp(options: AppOptions = {}): Express {
   const app = express();
   const env = options.env ?? (process.env as Record<string, string | undefined>);
+
+  // Startup configuration validation (issue #1437): every config module is
+  // checked here so an invalid deployment fails immediately — at require time
+  // for the production singleton or in the first test that builds an app —
+  // instead of surfacing mid-request when a handler first reads the setting.
+  validateStartupConfig({ env });
+
   const { trustProxy } = getRateLimitConfig(env);
   app.set('trust proxy', trustProxy);
   const rateLimiter = createRateLimiter(env);
