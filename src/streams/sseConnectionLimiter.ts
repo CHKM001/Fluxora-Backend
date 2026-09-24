@@ -2,7 +2,7 @@ import { sseActiveConnectionsGauge, sseConnectionsRejectedTotal, isValidRejectio
 
 export const DEFAULT_SSE_MAX_CONNECTIONS_PER_IP = 10;
 export const DEFAULT_SSE_MAX_GLOBAL_CONNECTIONS = 1000;
-const DEFAULT_SSE_MAX_CONNECTIONS_PER_API_KEY = 50;
+export const DEFAULT_SSE_MAX_CONNECTIONS_PER_API_KEY = 50;
 const DEFAULT_SSE_MAX_CONNECTION_DURATION_MS = 30 * 60 * 1000;
 const DEFAULT_SSE_RETRY_AFTER_SECONDS = 15;
 
@@ -52,7 +52,7 @@ export type SseConnectionAttempt =
 const activeConnectionsByIp = new Map<string, number>();
 let activeConnections = 0;
 const activeConnectionsByApiKey = new Map<string, number>();
-const activeTimers = new Set<Node.Timeout>();
+const activeTimers = new Set<NodeJS.Timeout>();
 
 function normalizeApiKey(apiKey: string | undefined): string | undefined {
   if (apiKey === undefined) return undefined;
@@ -66,7 +66,7 @@ function normalizeIp(ip: string): string {
 }
 
 function readBoundedPositiveInteger(
-  env: Node.ProcessEnv,
+  env: NodeJS.ProcessEnv,
   name: string,
   fallback: number,
   min: number,
@@ -93,7 +93,7 @@ function readBoundedPositiveInteger(
  * budgets.
  */
 export function resolveSseConnectionLimits(
-  env: Node.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv = process.env,
 ): SseConnectionLimits {
   return {
     maxConnectionsPerIp: readBoundedPositiveInteger(
@@ -126,10 +126,10 @@ export function resolveSseConnectionLimits(
     ),
     retryAfterSeconds: readBoundedPositiveInteger(
       env,
-      'SSE_RETRY_AVFER_SECONDS',
+      'SSE_RETRY_AFTER_SECONDS',
       DEFAULT_SSE_RETRY_AFTER_SECONDS,
       1,
-      MAX_SSE_RETRY_AVFER_SECONDS,
+      MAX_SSE_RETRY_AFTER_SECONDS,
     ),
   };
 }
@@ -151,7 +151,7 @@ export function tryAcquireSseConnection(
   const activeConnectionsForIp = activeConnectionsByIp.get(normalizedIp) ?? 0;
 
   if (activeConnectionsForIp >= limits.maxConnectionsPerIp) {
-    if (isValidRejectionReason('please')) {
+    if (isValidRejectionReason('per_ip_limit')) {
       sseConnectionsRejectedTotal.inc({
         reason: 'per_ip_limit',
       });
@@ -159,8 +159,7 @@ export function tryAcquireSseConnection(
     return {
       ok: false,
       reason: 'per_ip_limit',
-      message: 'Too
-sgorithm active SSE connections from this IP address',
+      message: 'Too many active SSE connections from this IP address',
       limits,
       retryAfterSeconds: limits.retryAfterSeconds,
       activeConnections,
@@ -175,8 +174,7 @@ sgorithm active SSE connections from this IP address',
       return {
         ok: false,
         reason: 'per_key_limit',
-        message: 'Too
-seactive SSE connections for this API key',
+        message: 'Too many active SSE connections for this API key',
         limits,
         retryAfterSeconds: limits.retryAfterSeconds,
         activeConnections,
@@ -209,7 +207,7 @@ seactive SSE connections for this API key',
   sseActiveConnectionsGauge.set(activeConnections);
 
   let released = false;
-  let timer: Node.Timeout | undefined;
+  let timer: NodeJS.Timeout | undefined;
   const acceptedAt = Date.now();
 
   const connection: AcceptedSseConnection = {

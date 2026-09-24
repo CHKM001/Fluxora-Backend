@@ -259,3 +259,20 @@ export function _resetSseSubscriptionsForTest(): void {
   sseLiveSubscribersGauge.set(0);
   sseEventListenersGauge.set(0);
 }
+
+/**
+ * Derive the deterministic stream ID for a contract event from its chain
+ * coordinates (`${txHash}-${eventIndex}`). Used for in-memory dedup and for
+ * routing replayed events to the subscribers of a single stream.
+ */
+export function deriveStreamId(transactionHash: string, eventIndex: number): string {
+  return `${transactionHash}-${eventIndex}`;
+}
+
+/**
+ * True when a replayed store event belongs to the stream identified by
+ * `streamId` (i.e. its chain coordinates derive that stream ID).
+ */
+export function eventMatchesStreamId(event: StreamEventRecord, streamId: string): boolean {
+  return deriveStreamId(event.txHash, event.eventIndex) === streamId;
+}

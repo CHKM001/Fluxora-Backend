@@ -86,12 +86,10 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
-  {
-  files: ['src/**/*.ts'],
-  plugins: { 'unused-exports': unusedExports },
-  rules: {
-    'unused-exports/no-unused-exports': 'error',
-  },
-},
+  // NOTE: a previous block here enabled an 'unused-exports/no-unused-exports'
+  // rule via an `unusedExports` plugin binding that was never defined (and the
+  // eslint-plugin-unused-exports package is not a dependency), which made every
+  // eslint invocation crash with `ReferenceError: unusedExports is not defined`.
+  // The dead block was removed so linting can run.
   prettierConfig,
 ];
