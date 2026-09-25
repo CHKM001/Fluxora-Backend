@@ -359,6 +359,7 @@ export const EnvSchema = z
     ADMIN_API_TOKEN: optionalString('ADMIN_API_TOKEN'),
     WS_AUTH_REQUIRED: booleanEnv().default(false),
     WS_ALLOWED_ORIGINS: optionalString('WS_ALLOWED_ORIGINS'),
+    WS_MAX_CONNECTIONS_PER_IP: integerEnv('WS_MAX_CONNECTIONS_PER_IP', 1, 100_000).default(10),
     WS_RECONNECT_LIMIT: integerEnv('WS_RECONNECT_LIMIT', 1, 100_000).default(20),
     WS_RECONNECT_WINDOW_MS: integerEnv('WS_RECONNECT_WINDOW_MS', 1, 86_400_000).default(60_000),
     SSE_MAX_CONNECTIONS_PER_IP: integerEnv('SSE_MAX_CONNECTIONS_PER_IP', 1, 100_000).default(10),
@@ -662,6 +663,7 @@ export interface Config {
   partnerApiToken?: string | undefined;
   requireAdminAuth: boolean;
   adminApiToken?: string | undefined;
+  wsMaxConnectionsPerIp: number;
   sseMaxConnectionsPerIp: number;
   sseMaxConnectionsPerApiKey: number;
   sseMaxGlobalConnections: number;
@@ -899,6 +901,7 @@ function toConfig(env: ParsedEnv): Config {
     partnerApiToken: env.PARTNER_API_TOKEN,
     requireAdminAuth: env.REQUIRE_ADMIN_AUTH,
     adminApiToken: env.ADMIN_API_TOKEN,
+    wsMaxConnectionsPerIp: env.WS_MAX_CONNECTIONS_PER_IP,
     sseMaxConnectionsPerIp: env.SSE_MAX_CONNECTIONS_PER_IP,
     sseMaxConnectionsPerApiKey: env.SSE_MAX_CONNECTIONS_PER_API_KEY,
     sseMaxGlobalConnections: env.SSE_MAX_GLOBAL_CONNECTIONS,
