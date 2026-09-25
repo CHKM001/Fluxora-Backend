@@ -1,9 +1,51 @@
 import { ContractEventRecord, IndexerStoreKind } from './types.js';
 import { StreamEventReplayFilter, StreamEventReplayResult, StreamEventRecord } from '../db/types.js';
+import { rowReader } from '../db/rowMapping.js';
 
 export type InsertContractEventsResult = { insertedEventIds: string[]; duplicateEventIds: string[]; };
 
 export const STALE_CURSOR_ERROR_CODE = 'STALE_CURSOR';
+
+/**
+ * Map a raw `contract_events` row into a {@link StreamEventRecord} (issue #1316).
+ *
+ * Strict row-mapping contract, enforced through the shared `rowReader`:
+ * - Every NOT NULL column must be present and non-NULL; an absent column is
+ *   treated exactly like NULL (a forgotten SELECT is a bug, not a NULL).
+ * - `ledger_hash` is nullable — legacy rows written before the column was
+ *   added must stay readable — but a wrong-typed value is still rejected.
+ * - `timestamptz` columns (`happened_at`, `ingested_at`) are normalized to
+ *   ISO-8601 strings; epoch numbers and unparsed JSON strings are rejected.
+ * - `payload` must be a JSON object (not an array, scalar, or string).
+ *
+ * @param row    Raw row as returned by `pg`.
+ * @param table  Partition/child-table name used in error reporting so the
+ *               error points at the partition that actually holds the bad row.
+ * @throws {RowMappingError} if any column violates the contract above.
+ */
+export function rowToStreamEventRecord(
+  row: Record<string, unknown>,
+  table: string = 'contract_events',
+): StreamEventRecord {
+  const r = rowReader(table, row);
+
+  const toIsoString = (column: string): string => r.requireDate(column).toISOString();
+
+  return {
+    eventId: r.requireString('event_id'),
+    ledger: r.requireInt('ledger', { min: 0 }),
+    ledgerHash: r.optionalString('ledger_hash'),
+    contractId: r.requireString('contract_id'),
+    topic: r.requireString('topic'),
+    txHash: r.requireString('tx_hash'),
+    txIndex: r.requireInt('tx_index', { min: 0 }),
+    operationIndex: r.requireInt('operation_index', { min: 0 }),
+    eventIndex: r.requireInt('event_index', { min: 0 }),
+    payload: r.requireJsonObject('payload'),
+    happenedAt: toIsoString('happened_at'),
+    ingestedAt: toIsoString('ingested_at'),
+  };
+}
 
 export class StaleCursorError extends Error {
   public readonly code = STALE_CURSOR_ERROR_CODE;

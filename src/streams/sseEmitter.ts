@@ -332,13 +332,19 @@ export function _resetSseSubscriptionsForTest(): void {
   sseEventListenersGauge.set(0);
 }
 
-// Upstream: accepts null/undefined and uses a simplified implementation.
-export function eventMatchesStreamId(
-  event: StreamEventRecord | null | undefined,
-  streamId: string,
-): boolean {
-  if (!event || !streamId) return false;
-  const payload = event.payload as Record<string, unknown> | undefined;
-  if (payload?.['id'] === streamId || payload?.['streamId'] === streamId) return true;
+/**
+ * Derive the deterministic stream ID for a contract event from its chain
+ * coordinates (`${txHash}-${eventIndex}`). Used for in-memory dedup and for
+ * routing replayed events to the subscribers of a single stream.
+ */
+export function deriveStreamId(transactionHash: string, eventIndex: number): string {
+  return `${transactionHash}-${eventIndex}`;
+}
+
+/**
+ * True when a replayed store event belongs to the stream identified by
+ * `streamId` (i.e. its chain coordinates derive that stream ID).
+ */
+export function eventMatchesStreamId(event: StreamEventRecord, streamId: string): boolean {
   return deriveStreamId(event.txHash, event.eventIndex) === streamId;
 }
