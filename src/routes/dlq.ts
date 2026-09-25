@@ -33,7 +33,7 @@
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAuth, requirePermission, Permission } from '../middleware/auth.js';
 import { asyncHandler, validationError } from '../middleware/errorHandler.js';
-import { info } from '../utils/logger.js';
+import { info } from '../lib/logger.js';
 import { recordAuditEvent } from '../lib/auditLog.js';
 import { successResponse, errorResponse } from '../utils/response.js';
 import { dlqRepository } from '../db/repositories/dlqRepository.js';

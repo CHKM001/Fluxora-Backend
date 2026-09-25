@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { DecimalSerializationError } from '../serialization/decimal.js';
-import { SerializationLogger, error as logError } from '../utils/logger.js';
+import { SerializationLogger, error as logError } from '../lib/logger.js';
 import { errorResponse } from '../utils/response.js';
 import { QueryTimeoutError } from '../db/pool.js';
 import { REQUEST_ID_HEADER } from './correlationId.js';
