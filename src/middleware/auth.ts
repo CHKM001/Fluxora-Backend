@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../lib/auth.js';
 import { ApiErrorCode } from './errorHandler.js';
-import { warn, info, debug } from '../utils/logger.js';
+import { warn, info, debug } from '../lib/logger.js';
 import { z } from 'zod';
 import { isRevoked } from '../redis/jwtRevocationStore.js';
 import { authJwtVerifyDurationSeconds } from '../metrics/businessMetrics.js';

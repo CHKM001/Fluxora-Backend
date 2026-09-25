@@ -10,7 +10,7 @@ import { dlqRouter } from './routes/dlq.js';
 import { authRouter } from './routes/auth.js';
 import { webhooksRouter, setInboundWebhookDedupCache } from './routes/webhooks.js';
 import { privacyRouter } from './routes/privacy.js';
-import { privacyHeaders, sanitizeResponses } from './middleware/pii.js';
+import { privacyHeaders, sanitizeResponses, responseSanitizer } from './middleware/pii.js';
 import type { Config } from './config/env.js';
 import { loadConfig, initializeConfig } from './config/env.js';
 import type { HealthCheckManager } from './config/health.js';

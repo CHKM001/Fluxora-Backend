@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { authApiKeyLookupDurationSeconds } from '../metrics/businessMetrics.js';
 import { verifyToken } from '../lib/auth.js';
-import { warn } from '../utils/logger.js';
+import { warn } from '../lib/logger.js';
 import crypto from 'crypto';
 
 /**

@@ -91,7 +91,7 @@ import {
 } from '../middleware/errorHandler.js';
 import { requireIdempotencyKey, parseIdempotencyKeyHeader } from '../middleware/requestProtection.js';
 import { canonicalizeBody } from '../middleware/idempotency.js';
-import { SerializationLogger, info, debug, warn } from '../utils/logger.js';
+import { SerializationLogger, info, debug, warn } from '../lib/logger.js';
 import { recordAuditEvent } from '../lib/auditLog.js';
 import { authenticate, requireAuth, authenticateApiKey, requireScope } from '../middleware/auth.js';
 import { successResponse, idempotentReplayResponse } from '../utils/response.js';
