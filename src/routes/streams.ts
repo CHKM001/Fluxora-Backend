@@ -1553,6 +1553,15 @@ streamsRouter.get(
  * Holds the HTTP connection open (bounded by a timeout) until a new event for the stream
  * arrives or the timeout elapses. Returns the same event envelope shape used by the
  * WebSocket hub.
+ *
+ * Timeout Semantics:
+ * - When the hold duration elapses without an event, the response includes:
+ *   - status: 'timeout' field to distinguish from errors
+ *   - retryAfterSeconds: configured retry hint for clients
+ *   - Retry-After HTTP header with the same retry hint
+ * - This allows clients to distinguish idle timeouts from errors and implement backoff
+ * - Hold duration is configurable via LONG_POLL_MAX_CONNECTION_DURATION_MS (default: 30s)
+ * - Retry hint is configurable via LONG_POLL_RETRY_AFTER_SECONDS (default: 15s)
  */
 streamsRouter.get(
   '/:id/poll',
@@ -1862,7 +1871,13 @@ streamsRouter.get(
     pollTimer = setTimeout(() => {
       if (cleanedUp || res.destroyed || res.writableEnded) return;
       cleanup('timeout_elapsed');
-      res.json(successResponse(null, requestId));
+      // Distinguish timeout from error by including a status field and Retry-After header
+      res.setHeader('Retry-After', String(longPollLimits.retryAfterSeconds));
+      res.json(successResponse({ 
+        data: null, 
+        status: 'timeout',
+        retryAfterSeconds: longPollLimits.retryAfterSeconds 
+      }, requestId));
     }, timeoutMs);
 
     pollTimer.unref?.();
