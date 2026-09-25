@@ -649,6 +649,10 @@ graphqlGatewayRouter.post(
           res,
           'QUERY_TOO_DEEP',
           `Query exceeds the maximum depth of ${MAX_QUERY_DEPTH}.`
+        );
+        return;
+      }
+
       if (!source || typeof source !== 'string') {
       res
         .status(400)
